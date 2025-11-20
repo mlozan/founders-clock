@@ -1,0 +1,1321 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Founder's Clock - Time Management Game</title>
+    <style>
+        /* Color Palette & Professional Aesthetics */
+        :root {
+            --color-primary: #0070c0; /* Corporate Blue */
+            --color-secondary: #f48132; /* Orange/Startup */
+            --color-wellbeing: #c0392b; /* Red/Wellbeing */
+            --color-energy: #27ae60; /* Green/Energy */
+            --color-background: #f4f7f9; /* Soft Gray Background */
+            --color-panel-bg: #ffffff; /* Clean Panel Background */
+            --color-border: #1f3b4d; /* Dark Border */
+        }
+
+        /* Charts styling */
+        .chart-row {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .chart-card {
+            flex: 1 1 320px;
+            background: #ffffff;
+            border: 1px solid #eee;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .chart-card h4 { margin-bottom: 6px; color: var(--color-primary); font-size: 15px; }
+
+        .chart-canvas { width: 100% !important; height: 250px !important; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--color-background);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--color-panel-bg);
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        /* TOP TITLE */
+        .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .day-title {
+            font-weight: 700;
+            font-size: 30px;
+            color: var(--color-border);
+        }
+
+        .day-title span {
+            display: block;
+            font-size: 18px;
+            color: var(--color-primary);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        /* MAIN BOARD LAYOUT */
+        .board {
+            display: grid;
+            grid-template-columns: 260px 1fr 260px;
+            gap: 25px;
+        }
+
+        /* LEFT COLUMN: TIME + METERS */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+        }
+
+        /* TIME BUBBLE (Clock) */
+        .time-bubble {
+            width: 100%;
+            padding: 15px 0;
+            background: var(--color-primary);
+            border-radius: 8px;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-bubble span {
+            display: block;
+            font-size: 14px;
+            font-weight: 300;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .time-bubble strong {
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .meters {
+            display: flex;
+            flex-direction: row; 
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .meter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meter-outer {
+            width: 50px;
+            height: 220px;
+            background: #e0e3e7;
+            border-radius: 6px;
+            border: 1px solid #aaa;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .meter-fill {
+            width: 100%;
+            transition: height 0.3s ease;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .energy-fill { background: var(--color-energy); }
+        .wellbeing-fill { background: var(--color-wellbeing); }
+        .startup-fill { background: var(--color-secondary); }
+
+        .meter-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-align: center;
+        }
+
+        /* CENTER COLUMN: TASK LIST + EISENHOWER MATRIX */
+        .center-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: var(--color-panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .panel-title {
+            font-weight: 800;
+            font-size: 20px;
+            text-align: center;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        .matrix-subtitle {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Drag and Drop Styles */
+        .task-list {
+            min-height: 100px;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            background: #fcfcfc;
+            margin-bottom: 15px;
+        }
+
+        .task-card {
+            border: 1px solid #ccc;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            border-radius: 4px;
+            background: #ffffff;
+            cursor: grab;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        
+        .task-card:active {
+            opacity: 0.7;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .task-card.dragging {
+            opacity: 0.5;
+            border: 2px solid var(--color-primary);
+        }
+
+        .task-header-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .task-meta {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* Eisenhower Matrix Grid */
+        .eisenhower-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            height: 400px; 
+            margin-top: 10px;
+        }
+
+        .quadrant {
+            border: 2px solid #ddd;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        
+        .quadrant-title {
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Highlight drag over state */
+        .quadrant.drag-over {
+            background-color: #e0f0ff; 
+            border-color: var(--color-primary);
+        }
+        
+        /* Quadrant specific colors for clarity */
+        .q1 { border-color: var(--color-wellbeing); background: #fff5f5; } 
+        .q1 .quadrant-title { color: var(--color-wellbeing); border-color: var(--color-wellbeing); }
+
+        .q2 { border-color: var(--color-energy); background: #f5fff5; }
+        .q2 .quadrant-title { color: var(--color-energy); border-color: var(--color-energy); }
+
+        .q3 { border-color: #f39c12; background: #fffef5; }
+        .q3 .quadrant-title { color: #f39c12; border-color: #f39c12; }
+
+        .q4 { border-color: #7f8c8d; background: #fcfcfc; }
+        .q4 .quadrant-title { color: #7f8c8d; border-color: #7f8c8d; }
+
+        /* Action Row (End Day Button) */
+        .action-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #005a9c;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* RIGHT COLUMN: SUMMARY & CRISES */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .daily-summary-panel {
+            border: 1px solid #ccc;
+            padding: 12px;
+            background: var(--color-panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+        }
+
+        .daily-summary-panel h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 4px;
+        }
+
+        .daily-summary-panel li {
+            margin-left: 18px;
+            margin-bottom: 4px;
+            list-style-type: '• ';
+        }
+
+        .crisis-panel {
+            border: 1px solid var(--color-wellbeing);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .crisis-header {
+            background: var(--color-wellbeing);
+            color: #ffffff;
+            font-weight: 700;
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+
+        .crisis-body {
+            padding: 10px;
+            background: #fef8f8;
+            font-size: 13px;
+        }
+
+        /* FEEDBACK BOX (BOTTOM) - STARS */
+        .feedback-box {
+            margin-top: 20px;
+            border: 1px solid var(--color-primary);
+            padding: 15px;
+            background: #eef7ff;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .feedback-box h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .star-rating {
+            font-size: 36px;
+            color: gold;
+            margin: 10px 0;
+            letter-spacing: 5px;
+        }
+
+        .rating-comment {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #fff;
+            margin-top: 10px;
+            border: 1px dashed #ccc;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1100px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+            .eisenhower-grid {
+                height: auto;
+                grid-template-columns: 1fr;
+            }
+            .left-column {
+                flex-direction: row; 
+                flex-wrap: wrap;
+                justify-content: space-around;
+            }
+            .time-bubble {
+                width: 40%;
+                min-width: 150px;
+            }
+            .meters {
+                flex-direction: row;
+                justify-content: center;
+                gap: 10px;
+            }
+            .meter-outer {
+                height: 140px;
+                width: 40px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container">
+    <div id="gameContent"></div>
+</div>
+
+<script>
+    // Game state (Metrics start at 100)
+    let gameState = {
+        day: 1,
+        maxDays: 30,
+        timeRemaining: 8,
+        energy: 100,
+        startupScore: 100,
+        wellbeingScore: 100,
+        efficiency: 0,
+        correctDecisions: 0,
+        totalDecisions: 0,
+        currentTasks: [],
+        completedTasks: [],
+        dayFeedback: [],
+        weeklyStats: [],
+        // Track last day when a crisis was triggered (to enforce >=1/week)
+        lastCrisisDay: 0,
+        // Task ordering to avoid repeating the same tasks every day
+        taskOrder: [],
+        taskPointer: 0,
+        crisisTriggered: false,
+        crisisCount: 0,
+        energyWarningShown: false,
+        crisisLog: []
+    };
+
+    // Task database (Unchanged)
+    const taskTemplates = [
+        { 
+            title: "Fix Critical Product Bug",
+            description: "App crashes affecting all users",
+            correctQuadrant: "q1",
+            time: 3,
+            energy: 15,
+            impact: { startup: 15, wellbeing: -5 }
+        },
+        {
+            title: "Prepare Investor Pitch",
+            description: "Meeting tomorrow morning",
+            correctQuadrant: "q1",
+            time: 4,
+            energy: 20,
+            impact: { startup: 20, wellbeing: -8 }
+        },
+        {
+            title: "Improve Product UX",
+            description: "Plan and implement improvements",
+            correctQuadrant: "q2",
+            time: 4,
+            energy: 10,
+            impact: { startup: 12, wellbeing: 0 }
+        },
+        {
+            title: "Strategic Planning",
+            description: "Define quarterly goals",
+            correctQuadrant: "q2",
+            time: 3,
+            energy: 8,
+            impact: { startup: 10, wellbeing: 2 }
+        },
+        {
+            title: "Reply to Non-Critical Emails",
+            description: "50+ unread messages",
+            correctQuadrant: "q3",
+            time: 2,
+            energy: 5,
+            impact: { startup: 2, wellbeing: -2 }
+        },
+        {
+            title: "Attend Optional Meeting",
+            description: "Could be handled async",
+            correctQuadrant: "q3",
+            time: 2,
+            energy: 8,
+            impact: { startup: 3, wellbeing: -3 }
+        },
+        {
+            title: "Organize Desktop Files",
+            description: "Clean up workspace",
+            correctQuadrant: "q4",
+            time: 1,
+            energy: 3,
+            impact: { startup: 1, wellbeing: 0 }
+        },
+        {
+            title: "Browse Social Media",
+            description: "Check competitor posts",
+            correctQuadrant: "q4",
+            time: 1,
+            energy: 2,
+            impact: { startup: 0, wellbeing: -1 }
+        },
+        {
+            title: "Doctor Appointment",
+            description: "Persistent health issue",
+            correctQuadrant: "q1",
+            time: 2,
+            energy: -10,
+            impact: { startup: 0, wellbeing: 15 }
+        },
+        {
+            title: "Exercise Session",
+            description: "Gym or run",
+            correctQuadrant: "q2",
+            time: 1,
+            energy: -15,
+            impact: { startup: 0, wellbeing: 12 }
+        },
+        {
+            title: "Meal Prep",
+            description: "Healthy meals for the week",
+            correctQuadrant: "q2",
+            time: 2,
+            energy: -5,
+            impact: { startup: 0, wellbeing: 8 }
+        },
+        {
+            title: "Mindless TV Watching",
+            description: "Binge Netflix series",
+            correctQuadrant: "q4",
+            time: 2,
+            energy: -3,
+            impact: { startup: 0, wellbeing: 2 }
+        }
+    ];
+    
+    // --- DRAG AND DROP LOGIC ---
+
+    let draggedTaskId = null;
+
+    function handleDragStart(e) {
+        draggedTaskId = e.target.dataset.taskId;
+        e.dataTransfer.setData('text/plain', draggedTaskId);
+        e.target.classList.add('dragging');
+        // Prevent tasks from being dropped back into the pending list
+        document.getElementById('task-list').style.border = '2px solid #ddd'; 
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('drag-over'));
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); 
+        const target = e.target.closest('.quadrant');
+        if (target && target.id !== 'task-list') {
+            target.classList.add('drag-over');
+        }
+    }
+
+    function handleDragLeave(e) {
+        const target = e.target.closest('.quadrant');
+        if (target) {
+            target.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('drag-over'));
+
+        const targetQuadrant = e.target.closest('.quadrant');
+        if (!targetQuadrant || targetQuadrant.id === 'task-list') {
+            // Drop back in the unassigned list (do nothing)
+            render();
+            return;
+        }
+
+        const quadrantId = targetQuadrant.dataset.quadrantId;
+        const taskId = draggedTaskId;
+        
+        // Find the task and update its assigned quadrant
+        const task = gameState.currentTasks.find(t => t.id === taskId);
+        if (task && quadrantId) {
+            task.selected = quadrantId;
+            render(); // Re-render to move the task element
+        }
+    }
+    
+    // --- GAME FLOW LOGIC (Slightly modified render/init) ---
+
+    function initGame() {
+        // Prepare a shuffled task order to avoid repeating the same tasks each day
+        gameState.taskOrder = [...taskTemplates].map((t, i) => i).sort(() => Math.random() - 0.5);
+        gameState.taskPointer = 0;
+
+        generateDailyTasks();
+        render();
+        // Add event listeners for Drag and Drop on initial render
+        setupDragAndDropListeners();
+    }
+    
+    function setupDragAndDropListeners() {
+        // Add drop listeners to quadrants
+        document.querySelectorAll('.quadrant').forEach(quadrant => {
+            quadrant.addEventListener('dragover', handleDragOver);
+            quadrant.addEventListener('dragleave', handleDragLeave);
+            quadrant.addEventListener('drop', handleDrop);
+        });
+        
+        // Add drag listeners to task cards (will be added via renderTaskRow)
+    }
+
+
+    function generateDailyTasks() {
+        const shuffled = [...taskTemplates].sort(() => Math.random() - 0.5);
+        // Generate 4 tasks per day using a rotating shuffled pool (no repeats day-to-day until pool exhausted)
+        if (!gameState.taskOrder || gameState.taskOrder.length === 0) {
+            gameState.taskOrder = [...taskTemplates].map((t, i) => i).sort(() => Math.random() - 0.5);
+            gameState.taskPointer = 0;
+        }
+
+        const take = 4;
+        const indices = [];
+        for (let i = 0; i < take; i++) {
+            if (gameState.taskPointer >= gameState.taskOrder.length) {
+                // reshuffle pool and reset pointer
+                gameState.taskOrder = [...taskTemplates].map((t, idx) => idx).sort(() => Math.random() - 0.5);
+                gameState.taskPointer = 0;
+            }
+            indices.push(gameState.taskOrder[gameState.taskPointer]);
+            gameState.taskPointer++;
+        }
+
+        gameState.currentTasks = indices.map((taskIndex, index) => ({
+            ...taskTemplates[taskIndex],
+            id: `task-${gameState.day}-${index}`,
+            selected: null
+        }));
+    }
+
+    function canCompleteDay() {
+        // All tasks must have a selected quadrant
+        return gameState.currentTasks.every(t => t.selected !== null);
+    }
+
+    function completeDay() {
+        if (!canCompleteDay()) {
+            alert("Please categorize all tasks before ending the day!");
+            return;
+        }
+
+        gameState.dayFeedback = []; 
+        let timeUsed = 0;
+        let energyUsed = 0;
+        let correctCount = 0;
+
+        gameState.currentTasks.forEach(task => {
+            const isCorrect = task.selected === task.correctQuadrant;
+            gameState.totalDecisions++;
+
+            if (isCorrect) {
+                gameState.correctDecisions++;
+                correctCount++;
+
+                if (task.selected === "q1" || task.selected === "q2") {
+                    gameState.startupScore += task.impact.startup;
+                    gameState.wellbeingScore += task.impact.wellbeing;
+                    timeUsed += task.time;
+                    energyUsed += task.energy;
+                }
+            } else {
+                if (task.correctQuadrant === "q1" && task.selected !== "q1") {
+                    gameState.startupScore -= 10;
+                    gameState.dayFeedback.push({ type: "warning", message: "⚠ Ignoring an urgent task caused problems (-10 startup score)" });
+                }
+
+                if (task.selected === "q1" || task.selected === "q2") {
+                    timeUsed += task.time;
+                    energyUsed += task.energy * 1.5;
+                    gameState.dayFeedback.push({ type: "wrong", message: `Misuse of time on ${task.title}.` });
+                }
+            }
+
+            gameState.completedTasks.push({ ...task, day: gameState.day });
+        });
+        
+        const dailyEfficiency = Math.round((correctCount / gameState.currentTasks.length) * 100);
+        gameState.dayFeedback.push({ type: "daily_efficiency", value: dailyEfficiency });
+
+
+        gameState.timeRemaining -= timeUsed;
+        gameState.energy = Math.max(0, Math.min(100, gameState.energy - energyUsed));
+        gameState.efficiency = Math.round((gameState.correctDecisions / gameState.totalDecisions) * 100);
+
+        gameState.startupScore = Math.max(0, Math.min(100, gameState.startupScore));
+        gameState.wellbeingScore = Math.max(0, Math.min(100, gameState.wellbeingScore));
+
+        if (gameState.energy < 30 && !gameState.energyWarningShown) {
+            gameState.dayFeedback.push({
+                type: "warning",
+                message: "⚠ Energy is getting low! Remember to prioritize self-care tasks."
+            });
+            gameState.energyWarningShown = true;
+        }
+
+        checkCrisis();
+
+        // Weekly review every 7 days
+        if (gameState.day % 7 === 0) {
+            showWeeklyReview();
+            return;
+        }
+
+        if (gameState.energy <= 0) {
+            endGame("burnout");
+            return;
+        }
+
+        if (gameState.startupScore <= 0) {
+            endGame("business-failure");
+            return;
+        }
+
+        if (gameState.day >= gameState.maxDays) {
+            endGame("complete");
+            return;
+        }
+
+        gameState.day++;
+        gameState.timeRemaining = 8;
+        gameState.energyWarningShown = false;
+        generateDailyTasks();
+        render();
+    }
+    
+    // --- (Crisis, Review and EndGame logic remain the same for brevity) ---
+    
+    function checkCrisis() {
+        const recentTasks = gameState.completedTasks.slice(-15);
+        const q2Tasks = recentTasks.filter(t => t.selected === "q2").length;
+        if (gameState.startupScore < 40 && gameState.crisisCount < 3 && !gameState.crisisTriggered) {
+            triggerCrisis("investor");
+        } else if (q2Tasks < 3 && gameState.day > 15 && !gameState.crisisTriggered) {
+            triggerCrisis("competitor");
+        } else if (gameState.energy < 20 && gameState.day > 10 && !gameState.crisisTriggered) {
+            triggerCrisis("burnout-warning");
+        } else {
+            // Enforce at least one crisis every 7 days (weekly)
+            const daysSinceLast = gameState.day - (gameState.lastCrisisDay || 0);
+            if (daysSinceLast >= 7 && gameState.day > 1 && !gameState.crisisTriggered) {
+                // trigger a mild random weekly crisis
+                triggerCrisis('weekly-challenge');
+            }
+        }
+    }
+
+    function triggerCrisis(type) {
+        gameState.crisisTriggered = true;
+        gameState.crisisCount++;
+
+        const crises = {
+            investor: {
+                title: "CRISIS: Investor Concerned!",
+                message:
+                    "Your investor noticed declining performance and is questioning the business. You have one week to show improvement.",
+                impact: { startup: -15, wellbeing: -10 }
+            },
+            competitor: {
+                title: "CRISIS: Competitor Launched!",
+                message:
+                    "A competitor released a better product because you neglected strategic work. Customer churn increasing!",
+                impact: { startup: -20, wellbeing: -5 }
+            },
+            "burnout-warning": {
+                title: "CRISIS WARNING: Burnout Risk!",
+                message:
+                    "Your energy is critically low. If it reaches 0, you will be forced to take a week off. Prioritize self-care NOW!",
+                impact: { startup: 0, wellbeing: -15 }
+            },
+            "weekly-challenge": {
+                title: "WEEKLY CHALLENGE",
+                message: "A new unexpected challenge appears this week — adapt quickly to avoid setbacks.",
+                impact: { startup: -8, wellbeing: -5 }
+            }
+        };
+
+        const crisis = crises[type] || crises['weekly-challenge'];
+        gameState.startupScore += crisis.impact.startup;
+        gameState.wellbeingScore += crisis.impact.wellbeing;
+
+        gameState.startupScore = Math.max(0, Math.min(100, gameState.startupScore));
+        gameState.wellbeingScore = Math.max(0, Math.min(100, gameState.wellbeingScore));
+
+        gameState.dayFeedback.unshift({
+            type: "crisis",
+            crisis
+        });
+
+        gameState.crisisLog.push({
+            day: gameState.day,
+            title: crisis.title
+        });
+
+        // record lastCrisisDay for weekly enforcement
+        gameState.lastCrisisDay = gameState.day;
+    }
+
+    function showWeeklyReview() {
+    const week = gameState.day / 7;
+    // last 7 days * 4 tasks/day = 28 tasks
+    const weekTasks = gameState.completedTasks.slice(-28);
+        const q1Count = weekTasks.filter(t => t.selected === "q1").length;
+        const q2Count = weekTasks.filter(t => t.selected === "q2").length;
+        const q3Count = weekTasks.filter(t => t.selected === "q3").length;
+        const q4Count = weekTasks.filter(t => t.selected === "q4").length;
+        const totalTasks = weekTasks.length;
+        // Record weekly stats for trend charts
+        const weekStats = {
+            week,
+            q1Count,
+            q2Count,
+            q3Count,
+            q4Count,
+            startup: Math.round(gameState.startupScore),
+            wellbeing: Math.round(gameState.wellbeingScore),
+            efficiency: gameState.efficiency
+        };
+        gameState.weeklyStats = gameState.weeklyStats || [];
+        gameState.weeklyStats.push(weekStats);
+        // keep last 12 weeks
+        if (gameState.weeklyStats.length > 12) gameState.weeklyStats.shift();
+
+        const content = `
+            <div class="top-row">
+                <div class="day-title">WEEK ${week}<span>Founder's Clock</span></div>
+            </div>
+            <div class="weekly-review">
+                <h2>Weekly Summary (Accumulated Feedback)</h2>
+
+                <table class="review-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Accumulated Efficiency Score:</td>
+                            <td><strong>${gameState.efficiency}%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Startup Score:</td>
+                            <td><strong>${Math.round(gameState.startupScore)}/100</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Wellbeing Score:</td>
+                            <td><strong>${Math.round(gameState.wellbeingScore)}/100</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3 style="margin-top:10px;margin-bottom:6px;">Task Management (Last 7 days)</h3>
+                <table class="review-table">
+                    <thead>
+                        <tr>
+                            <th>Quadrant</th>
+                            <th>Tasks Assigned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Q1 (Do First - Urgent/Important)</td>
+                            <td><strong>${q1Count}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Q2 (Schedule - Not Urgent/Important)</td>
+                            <td><strong>${q2Count}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Q3 (Delegate - Urgent/Not Important)</td>
+                            <td><strong>${q3Count}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Q4 (Eliminate - Not Urgent/Not Important)</td>
+                            <td><strong>${q4Count}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Total Tasks Analyzed</td>
+                            <td><strong>${totalTasks}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                ${getMentorTip(q1Count, q2Count, q3Count, q4Count)}
+                
+                <!-- Charts -->
+                <div class="chart-row">
+                    <div class="chart-card">
+                        <h4>Task distribution by Quadrant (last 7 days)</h4>
+                        <canvas id="quadChart" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Weekly Trends (startup / wellbeing / efficiency)</h4>
+                        <canvas id="trendChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="action-row" style="margin-top:16px;">
+                    <button class="btn btn-primary" onclick="continueFromReview()">Next day</button>
+                </div>
+            </div>
+        `;        document.getElementById("gameContent").innerHTML = content;
+        // Render charts after inserting HTML
+        setTimeout(() => {
+            try { renderWeeklyCharts(); } catch (e) { console.warn('Chart render error', e); }
+        }, 80);
+    }
+
+    function getMentorTip(q1, q2, q3, q4) {
+        let tip = "";
+
+        if (q1 > q2 * 2) {
+            tip =
+                "You are spending a lot of time on urgent fires. Try to invest more in **Q2 (Important but Not Urgent)** tasks to prevent future crises.";
+        } else if (q2 > q1 + q3) {
+            tip =
+                "Great job prioritizing strategic work. This will reduce future urgent tasks and support sustainable growth.";
+        } else if (q3 + q4 > q1 + q2) {
+            tip = "Too much time is going to low-priority tasks. Refocus on **Q1 and Q2** activities.";
+        } else if (gameState.energy < 50) {
+            tip = "Your energy is drifting downwards. Add more **self-care tasks** (exercise, rest) to keep performance sustainable.";
+        } else {
+            tip = "Nice overall balance – keep monitoring your time allocation and energy levels.";
+        }
+
+        return `<div class="mentor-tip"><strong>Mentor tip:</strong> ${tip}</div>`;
+    }
+
+    function continueFromReview() {
+        gameState.crisisTriggered = false;
+        gameState.day++;
+        gameState.timeRemaining = 8;
+        gameState.energy = Math.min(100, gameState.energy + 10); 
+        generateDailyTasks();
+        render();
+    }
+
+    function renderWeeklyCharts() {
+        // Ensure Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded');
+            return;
+        }
+
+        const stats = gameState.weeklyStats || [];
+        const latest = stats[stats.length - 1] || { q1Count: 0, q2Count: 0, q3Count: 0, q4Count: 0 };
+
+        // Quadrant distribution (doughnut)
+        const quadEl = document.getElementById('quadChart');
+        if (quadEl) {
+            if (window.quadChartInstance) { window.quadChartInstance.destroy(); }
+            window.quadChartInstance = new Chart(quadEl, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                        data: [latest.q1Count, latest.q2Count, latest.q3Count, latest.q4Count],
+                        backgroundColor: ['#c0392b', '#27ae60', '#f39c12', '#7f8c8d']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // Trend chart (line)
+        const trendEl = document.getElementById('trendChart');
+        if (trendEl) {
+            if (window.trendChartInstance) { window.trendChartInstance.destroy(); }
+            const labels = stats.map(s => 'W' + s.week);
+            const startupData = stats.map(s => s.startup);
+            const wellbeingData = stats.map(s => s.wellbeing);
+            const effData = stats.map(s => s.efficiency);
+
+            window.trendChartInstance = new Chart(trendEl, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Startup', data: startupData, borderColor: '#0070c0', backgroundColor: 'rgba(0,112,192,0.08)', fill: true, tension: 0.25 },
+                        { label: 'Wellbeing', data: wellbeingData, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.06)', fill: true, tension: 0.25 },
+                        { label: 'Efficiency', data: effData, borderColor: '#f48132', backgroundColor: 'rgba(244,129,50,0.06)', fill: true, tension: 0.25 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { suggestedMin: 0, suggestedMax: 100 } }
+                }
+            });
+        }
+    }
+
+    function endGame(reason) {
+        let title, message, badge;
+
+        if (reason === "complete") {
+            const avgScore =
+                (gameState.startupScore + gameState.wellbeingScore + gameState.efficiency) / 3;
+            if (avgScore >= 70) {
+                title = "Thriving Entrepreneur!";
+                message =
+                    "You successfully balanced startup growth with personal wellbeing over the whole simulation.";
+                badge = "Master of Time Management";
+            } else if (avgScore >= 50) {
+                title = "You survived!";
+                message =
+                    "You made it through, but there is room to improve your balance between priorities.";
+                badge = "Learning Entrepreneur";
+            } else {
+                title = "That was tough!";
+                message =
+                    "You survived, but just barely. Next time, invest more in important-not-urgent tasks.";
+                badge = "Aspiring Founder";
+            }
+        } else if (reason === "burnout") {
+            title = "Burnout!";
+            message =
+                "Energy reached zero: you had to stop. Remember that self-care is strategic, not selfish.";
+            badge = "Lesson learned: Work-Life Balance";
+        } else if (reason === "business-failure") {
+            title = "Business failed";
+            message =
+                "Startup score dropped to zero. Balance strategic planning with execution and avoid neglecting important tasks.";
+            badge = "Lesson learned: Consistent execution";
+        }
+
+        const content = `
+            <div class="game-over">
+                <h2>${title}</h2>
+                <p style="font-size:14px;margin-bottom:10px;">${message}</p>
+
+                <div class="final-stats">
+                    <div class="review-stat">
+                        <span>Days played:</span><strong>${gameState.day} / ${gameState.maxDays}</strong>
+                    </div>
+                    <div class="review-stat">
+                        <span>Startup score:</span><strong>${Math.round(gameState.startupScore)}/100</strong>
+                    </div>
+                    <div class="review-stat">
+                        <span>Wellbeing:</span><strong>${Math.round(gameState.wellbeingScore)}/100</strong>
+                    </div>
+                    <div class="review-stat">
+                        <span>Efficiency:</span><strong>${gameState.efficiency}%</strong>
+                    </div>
+                    <div class="review-stat">
+                        <span>Crises faced:</span><strong>${gameState.crisisCount}</strong>
+                    </div>
+                    <div class="review-stat" style="margin-top:10px;background:var(--color-primary);color:#fff;">
+                        <span>Achievement:</span><strong>${badge}</strong>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="location.reload()">Play again</button>
+            </div>
+        `;        document.getElementById("gameContent").innerHTML = content;
+    }
+
+    function renderTaskCard(task) {
+        return `
+            <div class="task-card" draggable="true" data-task-id="${task.id}"
+                 ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+                <div class="task-header-row">
+                    <div>${task.title}</div>
+                </div>
+                <div class="task-meta">
+                    ⏰ ${task.time}h | ⚡ ${Math.abs(task.energy)} ${task.energy < 0 ? "energy (recovery)" : "energy"}
+                </div>
+            </div>
+        `;
+    }
+
+    function getStarRating(efficiency) {
+        let stars = 0;
+        let comment = "";
+
+        if (efficiency >= 90) {
+            stars = 5;
+            comment = "Masterful classification! Maximum efficiency, focusing correctly on Q1 and Q2. A day of maximum impact.";
+        } else if (efficiency >= 75) {
+            stars = 4;
+            comment = "Excellent work. Most tasks were well-prioritized. Keep investing in Q2!";
+        } else if (efficiency >= 50) {
+            stars = 3;
+            comment = "Average day. You made some mistakes, especially in delegating (Q3) or postponing (Q2). Improve your strategic focus.";
+        } else if (efficiency >= 25) {
+            stars = 2;
+            comment = "Tough day. Too much time dedicated to low-impact tasks (Q3/Q4) or you ignored urgent ones (Q1). Re-evaluate your priorities.";
+        } else {
+            stars = 1;
+            comment = "Low efficiency. There were serious prioritization errors. This can negatively impact your Startup Score.";
+        }
+        
+        const starHtml = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+
+        return { starHtml, comment };
+    }
+
+    function renderFeedback() {
+        const hasCrisis = gameState.dayFeedback.some(f => f.type === "crisis");
+        const dailyEfficiencyData = gameState.dayFeedback.find(f => f.type === "daily_efficiency");
+        const efficiency = dailyEfficiencyData ? dailyEfficiencyData.value : 0;
+        
+        const { starHtml, comment } = getStarRating(efficiency);
+
+        let content = `<div class="feedback-box">`;
+
+        if (hasCrisis) {
+            const crisis = gameState.dayFeedback.find(f => f.type === "crisis").crisis;
+            content += `<div class="crisis-alert-banner">${crisis.title}</div>`;
+        }
+        
+        content += `
+            <h3>Day ${gameState.day} Feedback</h3>
+            <div class="star-rating">${starHtml}</div>
+            <p style="font-size: 14px;">Classification Efficiency: <strong>${efficiency}%</strong></p>
+            <div class="rating-comment">
+                ${comment}
+            </div>
+        `;
+
+        const warnings = gameState.dayFeedback.filter(f => f.type === "warning" || f.type === "wrong");
+        if (warnings.length > 0) {
+            content += `<h4 style="margin-top:10px; font-size:15px; font-weight:700;">Warnings:</h4>`;
+            warnings.forEach(w => {
+                content += `<div class="feedback-item feedback-warning">${w.message}</div>`;
+            });
+        }
+        
+        content += `</div>`;
+
+        return content;
+    }
+
+    function renderCrisisPanel() {
+        if (!gameState.crisisLog || gameState.crisisLog.length === 0) {
+            return '';
+        }
+
+        const lastCrisis = gameState.crisisLog[gameState.crisisLog.length - 1];
+
+        return `
+            <div class="crisis-panel">
+                <div class="crisis-header">CRISIS ALERT</div>
+                <div class="crisis-body">
+                    <div>⚠️ <strong>${lastCrisis.title}</strong></div>
+                    <div style="margin-top: 4px;">A new crisis is active! Focus on Q1 tasks to resolve it.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTimeAllocationPanel() {
+        return `
+            <div class="daily-summary-panel">
+                <h3>Time Allocation (Day)</h3>
+                <p style="font-size: 13px;">Quadrant allocation will be reflected in the Weekly Review.</p>
+                <div style="text-align: center; margin: 10px 0;">
+                    <span style="font-size: 12px; color: #555;">Ideally: Q2 > Q1 > Q3 > Q4</span>
+                </div>
+            </div>
+        `;
+    }
+
+
+    function render() {
+        // Separate tasks by assignment status
+        const unassignedTasks = gameState.currentTasks.filter(t => t.selected === null);
+        const assignedTasks = gameState.currentTasks.filter(t => t.selected !== null);
+        
+        // Group assigned tasks by quadrant
+        const tasksInQuadrant = (qId) => assignedTasks.filter(t => t.selected === qId).map(renderTaskCard).join('');
+
+        const content = `
+            <div class="top-row">
+                <div class="day-title">DAY ${gameState.day} / ${gameState.maxDays}<span>Founder's Clock</span></div>
+                <div style="text-align: right;">
+                    <button class="btn btn-primary" onclick="showWeeklyReview()" ${gameState.day % 7 !== 0 || gameState.day === gameState.maxDays ? 'disabled' : ''}>
+                        Weekly Review
+                    </button>
+                </div>
+            </div>
+
+            <div class="board">
+                <div class="left-column">
+                    <div class="time-bubble">
+                        <span>Time Left</span>
+                        <strong>${gameState.timeRemaining}h</strong>
+                    </div>
+
+                    <div class="meters">
+                        <div class="meter">
+                            <div class="meter-outer">
+                                <div class="meter-fill energy-fill" style="height: ${gameState.energy}%;"></div>
+                            </div>
+                            <div class="meter-label">Energy</div>
+                        </div>
+                        <div class="meter">
+                            <div class="meter-outer">
+                                <div class="meter-fill wellbeing-fill" style="height: ${gameState.wellbeingScore}%;"></div>
+                            </div>
+                            <div class="meter-label">Wellbeing</div>
+                        </div>
+                        <div class="meter">
+                            <div class="meter-outer">
+                                <div class="meter-fill startup-fill" style="height: ${gameState.startupScore}%;"></div>
+                            </div>
+                            <div class="meter-label">Startup Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="center-column">
+                    <div class="panel">
+                        <div class="panel-title">Daily Tasks</div>
+                        <p class="matrix-subtitle">Drag tasks from the list below to the quadrant where they belong.</p>
+                        
+                        <div id="task-list" class="task-list">
+                            ${unassignedTasks.map(renderTaskCard).join('')}
+                            ${unassignedTasks.length === 0 ? '<p style="text-align:center; color:#999; font-style:italic;">All tasks assigned!</p>' : ''}
+                        </div>
+                        
+                        <div class="eisenhower-grid">
+                            <div class="quadrant q1" data-quadrant-id="q1">
+                                <div class="quadrant-title">Q1: Do First (Urgent & Important)</div>
+                                ${tasksInQuadrant('q1')}
+                            </div>
+                            <div class="quadrant q2" data-quadrant-id="q2">
+                                <div class="quadrant-title">Q2: Schedule (Not Urgent & Important)</div>
+                                ${tasksInQuadrant('q2')}
+                            </div>
+                            <div class="quadrant q3" data-quadrant-id="q3">
+                                <div class="quadrant-title">Q3: Delegate (Urgent & Not Important)</div>
+                                ${tasksInQuadrant('q3')}
+                            </div>
+                            <div class="quadrant q4" data-quadrant-id="q4">
+                                <div class="quadrant-title">Q4: Eliminate (Not Urgent & Not Important)</div>
+                                ${tasksInQuadrant('q4')}
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn btn-primary" onclick="completeDay()" ${!canCompleteDay() ? 'disabled' : ''}>
+                                End Day (${gameState.timeRemaining}h remaining)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-column">
+                    <div class="daily-summary-panel">
+                        <h3>Accumulated Metrics</h3>
+                        <ul>
+                            <li><strong>Efficiency:</strong> ${gameState.efficiency}%</li>
+                            <li><strong>Correct Decisions:</strong> ${gameState.correctDecisions} / ${gameState.totalDecisions}</li>
+                            <li><strong>Crises Faced:</strong> ${gameState.crisisCount}</li>
+                        </ul>
+                    </div>
+
+                    ${renderCrisisPanel()}
+                    ${renderTimeAllocationPanel()}
+                </div>
+            </div>
+
+            ${gameState.dayFeedback.length > 0 && gameState.dayFeedback.some(f => f.type === 'daily_efficiency') ? renderFeedback() : ''}
+        `;
+        document.getElementById("gameContent").innerHTML = content;
+        
+        // IMPORTANT: Re-apply drag/drop listeners after every render to new elements
+        setupDragAndDropListeners();
+    }
+
+    // Ensure initGame runs on load
+    window.onload = initGame;
+</script>
+</body>
+</html>
